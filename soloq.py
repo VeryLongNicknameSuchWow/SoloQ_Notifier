@@ -1,6 +1,7 @@
 import configparser
-import requests
 import shelve
+
+import requests
 
 config = configparser.ConfigParser()
 if not config.read('config.ini'):
@@ -58,13 +59,24 @@ def notify_game_result(summoner_dto, data):
             raise Exception("Could not get match details", match_dto)
 
         participants = match_dto['info']['participants']
+        numeric_id = match.split("_")[1]
 
         for p in participants:
             if p['puuid'] == puuid:
+                emoji = ":trophy:" if p['win'] else ":cold_face:"
                 result = "won" if p['win'] else "lost"
-                message = f"{USERNAME} {result} a game (ID: {match})"
-                print(message)
-                response = requests.post(WEBHOOK_URL, json={'content': message})
+                color = 6591981 if p['win'] else 16737095
+                print(f"game {result} (ID: {numeric_id})")
+                response = requests.post(WEBHOOK_URL, json={'embeds': [
+                    {
+                        "title": USERNAME,
+                        "description": f"game {result} {emoji}",
+                        "color": color,
+                        "footer": {
+                            "text": f"ID: {numeric_id}"
+                        },
+                    },
+                ]})
                 if not response.ok:
                     raise Exception("Could not post to Discord")
                 break
@@ -94,7 +106,16 @@ def notify_in_game(summoner_dto, data):
 
     message = f"{USERNAME} started a new game (ID: {current_game})"
     print(message)
-    response = requests.post(WEBHOOK_URL, json={'content': message})
+    response = requests.post(WEBHOOK_URL, json={'embeds': [
+        {
+            "title": USERNAME,
+            "description": f"started a new game :sparkles:",
+            "color": 16738740,
+            "footer": {
+                "text": f"ID: {current_game}"
+            },
+        },
+    ]})
     if not response.ok:
         raise Exception("Could not post to discord")
 
