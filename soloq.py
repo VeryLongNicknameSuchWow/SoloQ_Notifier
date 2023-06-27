@@ -40,7 +40,7 @@ def notify_game_result(summoner_dto, data):
     last_match = data['last_match']
 
     matches_by_puuid_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY})
+    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY, 'count': 1})
     matches_dto = response.json()
     if not response.ok:
         raise Exception("Could not get match history", matches_dto)
@@ -48,38 +48,58 @@ def notify_game_result(summoner_dto, data):
         print("Match history is empty")
         return
 
-    for match in matches_dto:
-        if match == last_match:
-            break
+    match = matches_dto[0]
+    if match == last_match:
+        return
 
-        match_by_id_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/{match}"
-        response = requests.get(match_by_id_url, params={'api_key': RIOT_API_KEY})
-        match_dto = response.json()
+    match_by_id_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/{match}"
+    response = requests.get(match_by_id_url, params={'api_key': RIOT_API_KEY})
+    match_dto = response.json()
+    if not response.ok:
+        raise Exception("Could not get match details", match_dto)
+
+    rank_message = ""
+    queue_id = match_dto['info']['queueId']
+    if queue_id == 420 or queue_id == 440:
+        queue_str = "SOLO/DUO" if queue_id == 420 else "FLEX"
+        queue_type = 'RANKED_SOLO_5x5' if queue_id == 420 else 'RANKED_FLEX_SR'
+        league_entries_url = f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_dto['id']}"
+        response = requests.get(league_entries_url, params={'api_key': RIOT_API_KEY})
+        league_entries = response.json()
         if not response.ok:
-            raise Exception("Could not get match details", match_dto)
+            raise Exception("Could not get league entries", league_entries)
 
-        participants = match_dto['info']['participants']
-        numeric_id = match.split("_")[1]
+        for entry in league_entries:
+            if entry['queueType'] == queue_type:
+                rank_str = f"{entry['tier']} {entry['rank']} {entry['leaguePoints']}LP"
+                wins = entry['wins']
+                losses = entry['losses']
+                total = 100 * wins / (wins + losses)
+                wr_str = f"{wins}W {losses}L {total:.2f}% WR"
+                rank_message = f"\n\n{queue_str}\n{rank_str}\n{wr_str}"
 
-        for p in participants:
-            if p['puuid'] == puuid:
-                emoji = ":trophy:" if p['win'] else ":cold_face:"
-                result = "won" if p['win'] else "lost"
-                color = 6591981 if p['win'] else 16737095
-                print(f"game {result} (ID: {numeric_id})")
-                response = requests.post(WEBHOOK_URL, json={'embeds': [
-                    {
-                        "title": USERNAME,
-                        "description": f"game {result} {emoji}",
-                        "color": color,
-                        "footer": {
-                            "text": f"ID: {numeric_id}"
-                        },
+    participants = match_dto['info']['participants']
+    numeric_id = match.split("_")[1]
+
+    for p in participants:
+        if p['puuid'] == puuid:
+            emoji = ":trophy:" if p['win'] else ":cold_face:"
+            result = "won" if p['win'] else "lost"
+            color = 6591981 if p['win'] else 16737095
+            print(f"game {result} (ID: {numeric_id})")
+            response = requests.post(WEBHOOK_URL, json={'embeds': [
+                {
+                    "title": USERNAME,
+                    "description": f"game {result} {emoji}{rank_message}",
+                    "color": color,
+                    "footer": {
+                        "text": f"ID: {numeric_id}"
                     },
-                ]})
-                if not response.ok:
-                    raise Exception("Could not post to Discord")
-                break
+                },
+            ]})
+            if not response.ok:
+                raise Exception("Could not post to Discord")
+            break
 
     data['last_match'] = str(matches_dto[0])
 
