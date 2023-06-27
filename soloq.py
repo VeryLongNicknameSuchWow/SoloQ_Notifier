@@ -81,7 +81,8 @@ def notify_game_result(summoner_dto, data):
     participants = match_dto['info']['participants']
     numeric_id = match.split("_")[1]
 
-    if match_dto['info']['gameDuration'] <= 5 * 60 * 1000:
+    duration_multiplier = 1000 if 'gameEndTimestamp' not in match_dto['info'] else 1
+    if match_dto['info']['gameDuration'] <= 5 * 60 * duration_multiplier:
         # game lasted less than 5 minutes - likely a remake
         response = requests.post(WEBHOOK_URL, json={'embeds': [
             {
