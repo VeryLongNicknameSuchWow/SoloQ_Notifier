@@ -81,25 +81,40 @@ def notify_game_result(summoner_dto, data):
     participants = match_dto['info']['participants']
     numeric_id = match.split("_")[1]
 
-    for p in participants:
-        if p['puuid'] == puuid:
-            emoji = ":trophy:" if p['win'] else ":cold_face:"
-            result = "won" if p['win'] else "lost"
-            color = 6591981 if p['win'] else 16737095
-            print(f"game {result} (ID: {numeric_id})")
-            response = requests.post(WEBHOOK_URL, json={'embeds': [
-                {
-                    "title": USERNAME,
-                    "description": f"game {result} {emoji}{rank_message}",
-                    "color": color,
-                    "footer": {
-                        "text": f"ID: {numeric_id}"
-                    },
+    if match_dto['info']['gameDuration'] <= 5 * 60 * 1000:
+        # game lasted less than 5 minutes - likely a remake
+        response = requests.post(WEBHOOK_URL, json={'embeds': [
+            {
+                "title": USERNAME,
+                "description": f"remake...",
+                "color": 8421504,
+                "footer": {
+                    "text": f"ID: {numeric_id}"
                 },
-            ]})
-            if not response.ok:
-                raise Exception("Could not post to Discord")
-            break
+            },
+        ]})
+        if not response.ok:
+            raise Exception("Could not post to Discord")
+    else:
+        for p in participants:
+            if p['puuid'] == puuid:
+                emoji = ":trophy:" if p['win'] else ":cold_face:"
+                result = "won" if p['win'] else "lost"
+                color = 6591981 if p['win'] else 16737095
+                print(f"game {result} (ID: {numeric_id})")
+                response = requests.post(WEBHOOK_URL, json={'embeds': [
+                    {
+                        "title": USERNAME,
+                        "description": f"game {result} {emoji}{rank_message}",
+                        "color": color,
+                        "footer": {
+                            "text": f"ID: {numeric_id}"
+                        },
+                    },
+                ]})
+                if not response.ok:
+                    raise Exception("Could not post to Discord")
+                break
 
     data['last_match'] = str(matches_dto[0])
 
