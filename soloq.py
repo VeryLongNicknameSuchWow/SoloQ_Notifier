@@ -2,6 +2,7 @@ import configparser
 import datetime
 import shelve
 import sys
+import textwrap
 
 import requests
 
@@ -190,12 +191,14 @@ def notify_in_game(summoner_dto, data):
     response = requests.post(WEBHOOK_URL, json={'embeds': [
         {
             "title": USERNAME,
-            "description": f"""
+            "description": textwrap.dedent(
+                f"""
                 started a new game :sparkles:
                 
                 it's their {add_ordinal_suffix(matches_today + 1)} game today,
                 {add_ordinal_suffix(matches_past_24h + 1)} game in the past 24h
-                """,
+                """
+            ),
             "color": 16738740,
             "footer": {
                 "text": f"ID: {current_game}"
