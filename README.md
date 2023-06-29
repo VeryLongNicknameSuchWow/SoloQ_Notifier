@@ -9,6 +9,34 @@ to Discord.
 - Sends a Discord message whenever the player starts a new game
 - Sends a Discord message whenever the player finishes a game
 
+### Screenshots
+
+Below are a few examples of messages sent using this script:
+<table>
+  <tr>
+    <td>
+      <img src="screenshots/lost_unranked.png">
+      <br>
+      <em>Lost unranked game</em>
+    </td>
+    <td>
+      <img src="screenshots/lost_flex.png">
+      <br>
+      <em>Lost ranked game</em>
+    </td>
+    <td>
+      <img src="screenshots/won_solo.png">
+      <br>
+      <em>Won ranked game</em>
+    </td>
+    <td>
+      <img src="screenshots/new.png">
+      <br>
+      <em>New game message</em>
+    </td>
+  </tr>
+</table>
+
 ### Dependencies
 
 This script was tested on Python 3.10 and requires the `requests` library. You can install it with pip:
