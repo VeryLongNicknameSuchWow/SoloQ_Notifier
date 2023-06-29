@@ -41,7 +41,14 @@ This script can be run with the following command:
 python3 soloq.py
 ```
 
-You can setup a [cron](https://en.wikipedia.org/wiki/Cron) job to run the script automatically every few minutes. To do that run `crontab -e` to open the cron
+A path to a configuration file can optionally be passed as a command line argument:
+
+```
+python3 soloq.py other_config.ini
+```
+
+You can setup a [cron](https://en.wikipedia.org/wiki/Cron) job to run the script automatically every few minutes. To do
+that run `crontab -e` to open the cron
 table editor and add a new line at the bottom:
 
 ```

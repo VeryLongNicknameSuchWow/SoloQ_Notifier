@@ -1,11 +1,16 @@
 import configparser
 import shelve
+import sys
 
 import requests
 
+config_path = 'config.ini'
+if len(sys.argv) == 2:
+    config_path = sys.argv[1]
+
 config = configparser.ConfigParser()
-if not config.read('config.ini'):
-    print("Could not load config.ini file")
+if not config.read(config_path):
+    print(f"Could not load '{config_path}' file")
     exit(1)
 
 try:
