@@ -71,7 +71,10 @@ def notify_game_result(summoner_dto, data):
 
         for entry in league_entries:
             if entry['queueType'] == queue_type:
-                rank_str = f"{entry['tier']} {entry['rank']} {entry['leaguePoints']}LP"
+                if entry['tier'] in ['MASTER', 'GRANDMASTER', 'CHALLENGER']:
+                    rank_str = f"{entry['tier']} {entry['leaguePoints']}LP"
+                else:
+                    rank_str = f"{entry['tier']} {entry['rank']} {entry['leaguePoints']}LP"
                 wins = entry['wins']
                 losses = entry['losses']
                 total = 100 * wins / (wins + losses)
