@@ -61,6 +61,7 @@ This will run the script once every minute.
 
 ### Note
 
+This script makes between 3 and 7 requests to Riot API each time it's run.
 Riot Games API has strict rate limits. If your application exceeds those limits, your IP may be temporarily blacklisted.
 Always ensure you are within the API usage limits to prevent this from happening.
 
