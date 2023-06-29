@@ -1,4 +1,5 @@
 import configparser
+import datetime
 import shelve
 import sys
 
@@ -29,6 +30,22 @@ try:
 except KeyError as e:
     print(e, "must be specified in config [SOLOQ] section")
     exit(1)
+
+
+def add_ordinal_suffix(n):
+    last_two_digits = n % 100
+    if 11 <= last_two_digits <= 13:
+        return f"{n}th"
+
+    last_digit = n % 10
+    if last_digit == 1:
+        return f"{n}st"
+    elif last_digit == 2:
+        return f"{n}nd"
+    elif last_digit == 3:
+        return f"{n}rd"
+
+    return f"{n}th"
 
 
 def get_summoner_dto():
@@ -129,6 +146,7 @@ def notify_game_result(summoner_dto, data):
 
 
 def notify_in_game(summoner_dto, data):
+    puuid = summoner_dto['puuid']
     summoner_eid = summoner_dto['id']
 
     active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{summoner_eid}"
@@ -148,12 +166,36 @@ def notify_in_game(summoner_dto, data):
         print(f"In the same game (ID: {current_game})")
         return
 
+    today = datetime.datetime.now()
+    midnight = datetime.datetime(today.year, today.month, today.day, tzinfo=datetime.timezone.utc)
+    midnight_epoch = int(midnight.timestamp())
+    day_ago = today - datetime.timedelta(days=1)
+    day_ago_epoch = int(day_ago.timestamp())
+
+    matches_by_puuid_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
+    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY, 'startTime': midnight_epoch})
+    matches_dto = response.json()
+    if not response.ok:
+        raise Exception("Could not get match history", matches_dto)
+    matches_today = len(matches_dto)
+
+    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY, 'startTime': day_ago_epoch})
+    matches_dto = response.json()
+    if not response.ok:
+        raise Exception("Could not get match history", matches_dto)
+    matches_past_24h = len(matches_dto)
+
     message = f"{USERNAME} started a new game (ID: {current_game})"
     print(message)
     response = requests.post(WEBHOOK_URL, json={'embeds': [
         {
             "title": USERNAME,
-            "description": f"started a new game :sparkles:",
+            "description": f"""
+                started a new game :sparkles:
+                
+                it's their {add_ordinal_suffix(matches_today + 1)} game today,
+                {add_ordinal_suffix(matches_past_24h + 1)} game in the past 24h
+                """,
             "color": 16738740,
             "footer": {
                 "text": f"ID: {current_game}"
