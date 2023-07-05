@@ -82,10 +82,10 @@ that run `crontab -e` to open the cron
 table editor and add a new line at the bottom:
 
 ```
-*/1 * * * * cd /path-to-your-script && python3 soloq.py
+*/1 * * * * cd /path-to-your-script && python3 soloq.py >> soloq.log 2>&1
 ```
 
-This will run the script once every minute.
+This will run the script once every minute. Output and errors will be saved in `soloq.log` file.
 
 ### Note
 
