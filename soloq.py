@@ -51,7 +51,8 @@ def add_ordinal_suffix(n):
 
 def get_summoner_dto():
     summoner_by_name_url = f"https://{USER_REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{USERNAME}"
-    response = requests.get(summoner_by_name_url, params={'api_key': RIOT_API_KEY})
+    response = requests.get(summoner_by_name_url,
+                            headers={'X-Riot-Token': RIOT_API_KEY})
     summoner_dto = response.json()
     if not response.ok:
         raise Exception("Could not get summoner", summoner_dto)
@@ -60,10 +61,13 @@ def get_summoner_dto():
 
 def notify_game_result(summoner_dto, data):
     puuid = summoner_dto['puuid']
+    summoner_eid = summoner_dto['id']
     last_match = data['last_match']
 
     matches_by_puuid_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY, 'count': 1})
+    response = requests.get(matches_by_puuid_url,
+                            params={'count': 1},
+                            headers={'X-Riot-Token': RIOT_API_KEY})
     matches_dto = response.json()
     if not response.ok:
         raise Exception("Could not get match history", matches_dto)
@@ -76,7 +80,8 @@ def notify_game_result(summoner_dto, data):
         return
 
     match_by_id_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/{match}"
-    response = requests.get(match_by_id_url, params={'api_key': RIOT_API_KEY})
+    response = requests.get(match_by_id_url,
+                            headers={'X-Riot-Token': RIOT_API_KEY})
     match_dto = response.json()
     if not response.ok:
         raise Exception("Could not get match details", match_dto)
@@ -86,8 +91,9 @@ def notify_game_result(summoner_dto, data):
     if queue_id == 420 or queue_id == 440:
         queue_str = "SOLO/DUO" if queue_id == 420 else "FLEX"
         queue_type = 'RANKED_SOLO_5x5' if queue_id == 420 else 'RANKED_FLEX_SR'
-        league_entries_url = f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_dto['id']}"
-        response = requests.get(league_entries_url, params={'api_key': RIOT_API_KEY})
+        league_entries_url = f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_eid}"
+        response = requests.get(league_entries_url,
+                                headers={'X-Riot-Token': RIOT_API_KEY})
         league_entries = response.json()
         if not response.ok:
             raise Exception("Could not get league entries", league_entries)
@@ -151,7 +157,8 @@ def notify_in_game(summoner_dto, data):
     summoner_eid = summoner_dto['id']
 
     active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{summoner_eid}"
-    response = requests.get(active_games_url, params={'api_key': RIOT_API_KEY})
+    response = requests.get(active_games_url,
+                            headers={'X-Riot-Token': RIOT_API_KEY})
     current_game_info = response.json()
     if not response.status_code == 404 and not response.ok:
         raise Exception("Could not get active game", current_game_info)
@@ -174,13 +181,17 @@ def notify_in_game(summoner_dto, data):
     day_ago_epoch = int(day_ago.timestamp())
 
     matches_by_puuid_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY, 'startTime': midnight_epoch})
+    response = requests.get(matches_by_puuid_url,
+                            params={'startTime': midnight_epoch},
+                            headers={'X-Riot-Token': RIOT_API_KEY})
     matches_dto = response.json()
     if not response.ok:
         raise Exception("Could not get match history", matches_dto)
     matches_today = len(matches_dto)
 
-    response = requests.get(matches_by_puuid_url, params={'api_key': RIOT_API_KEY, 'startTime': day_ago_epoch})
+    response = requests.get(matches_by_puuid_url,
+                            params={'startTime': day_ago_epoch},
+                            headers={'X-Riot-Token': RIOT_API_KEY})
     matches_dto = response.json()
     if not response.ok:
         raise Exception("Could not get match history", matches_dto)
