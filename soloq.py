@@ -236,6 +236,6 @@ if __name__ == '__main__':
             print("Ran successfully!")
         except Exception as e:
             if not data['error']:
-                requests.post(WEBHOOK_URL, json={'content': str(e)})
+                requests.post(WEBHOOK_URL, json={'content': "An error occurred, check logs"})
             data['error'] = True
             raise e
