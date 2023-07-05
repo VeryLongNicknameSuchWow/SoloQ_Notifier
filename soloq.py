@@ -238,4 +238,5 @@ if __name__ == '__main__':
             if not data['error']:
                 requests.post(WEBHOOK_URL, json={'content': "An error occurred, check logs"})
             data['error'] = True
+            print(datetime.datetime.now(), file=sys.stderr)
             raise e
