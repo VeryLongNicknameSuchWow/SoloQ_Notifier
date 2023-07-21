@@ -25,7 +25,7 @@ async def on_starting(_: hikari.StartingEvent) -> None:
 
     bot.d.client_session = aiohttp.ClientSession(
         headers={'X-Riot-Token': config['RIOT']['API_KEY']},
-        timeout=0,
+        timeout=aiohttp.ClientTimeout(total=None),
     )
 
     bot.d.motor_client = motor.motor_asyncio.AsyncIOMotorClient(
