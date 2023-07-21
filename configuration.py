@@ -1,7 +1,7 @@
 import configparser
 import logging
 
-logger = logging.getLogger("configuration")
+logger = logging.getLogger(__name__)
 
 config = configparser.ConfigParser()
 config_structure = {
