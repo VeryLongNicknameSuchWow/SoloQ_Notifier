@@ -98,20 +98,17 @@ def notify_game_result(summoner_dto, data):
             'type': 'RANKED_FLEX_SR',
             'str': "FLEX",
         },
-        # 1700: {
-        #     'type': 'CHERRY',
-        #     'str': "ARENA",
-        # },
+        1700: {
+            'type': 'CHERRY',
+            'str': "ARENA",
+        },
     }
-
-    if queue_id not in queue_dict:
-        return
 
     if queue_id in queue_dict:
         queue_str = queue_dict[queue_id]['str']
         queue_type = queue_dict[queue_id]['type']
 
-        rank_message = f"\n\n{queue_str}\n(NO RANK)"
+        rank_message = f"\n\n{queue_str}"
 
         league_entries_url = f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_eid}"
         response = requests.get(league_entries_url,
@@ -122,15 +119,21 @@ def notify_game_result(summoner_dto, data):
 
         for entry in league_entries:
             if entry['queueType'] == queue_type:
-                if entry['tier'] in ['MASTER', 'GRANDMASTER', 'CHALLENGER']:
-                    rank_str = f"{entry['tier']} {entry['leaguePoints']}LP"
-                else:
-                    rank_str = f"{entry['tier']} {entry['rank']} {entry['leaguePoints']}LP"
-                wins = entry['wins']
-                losses = entry['losses']
-                total = 100 * wins / (wins + losses)
-                wr_str = f"{wins}W {losses}L {total:.2f}% WR"
-                rank_message = f"\n\n{queue_str}\n{rank_str}\n{wr_str}"
+                try:
+                    if entry['tier'] in ['MASTER', 'GRANDMASTER', 'CHALLENGER']:
+                        rank_message += f"\n{entry['tier']} {entry['leaguePoints']}LP"
+                    else:
+                        rank_message += f"\n{entry['tier']} {entry['rank']} {entry['leaguePoints']}LP"
+                except KeyError:
+                    pass
+
+                try:
+                    wins = entry['wins']
+                    losses = entry['losses']
+                    total = 100 * wins / (wins + losses)
+                    rank_message += f"\n{wins}W {losses}L {total:.2f}% WR"
+                except KeyError:
+                    pass
 
     participants = match_dto['info']['participants']
     numeric_id = match.split("_")[1]
