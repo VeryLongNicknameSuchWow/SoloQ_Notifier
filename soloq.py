@@ -88,9 +88,28 @@ def notify_game_result(summoner_dto, data):
 
     rank_message = ""
     queue_id = match_dto['info']['queueId']
-    if queue_id == 420 or queue_id == 440:
-        queue_str = "SOLO/DUO" if queue_id == 420 else "FLEX"
-        queue_type = 'RANKED_SOLO_5x5' if queue_id == 420 else 'RANKED_FLEX_SR'
+
+    queue_dict = {
+        420: {
+            'type': 'RANKED_SOLO_5x5',
+            'str': "SOLO/DUO",
+        },
+        440: {
+            'type': 'RANKED_FLEX_SR',
+            'str': "FLEX",
+        },
+        1700: {
+            'type': 'CHERRY',
+            'str': "ARENA",
+        },
+    }
+
+    if queue_id in queue_dict:
+        queue_str = queue_dict[queue_id]['str']
+        queue_type = queue_dict[queue_id]['type']
+
+        rank_message = f"\n\n{queue_str}\n(NO RANK)"
+
         league_entries_url = f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_eid}"
         response = requests.get(league_entries_url,
                                 headers={'X-Riot-Token': RIOT_API_KEY})
