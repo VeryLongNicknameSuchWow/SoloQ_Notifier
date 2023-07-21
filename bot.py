@@ -3,6 +3,7 @@ import sys
 import aiohttp
 import hikari
 import lightbulb
+import miru
 import motor.motor_asyncio
 from lightbulb.ext import tasks
 
@@ -14,6 +15,8 @@ if len(sys.argv) == 2:
 config = configuration.read_config(config_path)
 
 bot = lightbulb.BotApp(token=config['DISCORD']['BOT_TOKEN'])
+miru.install(bot)
+
 bot.load_extensions_from("./commands/")
 bot.load_extensions_from("./tasks/")
 tasks.load(bot)
