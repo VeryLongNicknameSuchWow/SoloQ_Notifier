@@ -98,11 +98,14 @@ def notify_game_result(summoner_dto, data):
             'type': 'RANKED_FLEX_SR',
             'str': "FLEX",
         },
-        1700: {
-            'type': 'CHERRY',
-            'str': "ARENA",
-        },
+        # 1700: {
+        #     'type': 'CHERRY',
+        #     'str': "ARENA",
+        # },
     }
+
+    if queue_id not in queue_dict:
+        return
 
     if queue_id in queue_dict:
         queue_str = queue_dict[queue_id]['str']
