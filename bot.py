@@ -1,11 +1,11 @@
 import sys
 
-import aiohttp
 import hikari
 import lightbulb
 import miru
-import motor.motor_asyncio
 from lightbulb.ext import tasks
+from pyot.conf.model import activate_model, ModelConf
+from pyot.conf.pipeline import activate_pipeline, PipelineConf
 
 import configuration
 
@@ -13,6 +13,43 @@ config_path = 'config.ini'
 if len(sys.argv) == 2:
     config_path = sys.argv[1]
 config = configuration.read_config(config_path)
+
+
+@activate_model('lol')
+class LolModel(ModelConf):
+    default_platform = 'eun1'
+    default_region = 'europe'
+    default_version = 'latest'
+    default_locale = 'en_us'
+
+
+@activate_pipeline('lol')
+class LolPipeline(PipelineConf):
+    name = 'lol_main'
+    default = True
+    stores = [
+        {
+            'backend': 'pyot.stores.rediscache.RedisCache',
+            'host': config['REDIS']['HOST'],
+            'port': config['REDIS']['PORT'],
+            'db': config['REDIS']['DB'],
+        },
+        {
+            'backend': 'pyot.stores.cdragon.CDragon',
+        },
+        {
+            'backend': 'pyot.stores.riotapi.RiotAPI',
+            'api_key': config['RIOT']['API_KEY'],
+            'rate_limiter': {
+                'backend': 'pyot.limiters.redis.RedisLimiter',
+                'limiting_share': 1,
+                'host': config['REDIS']['HOST'],
+                'port': config['REDIS']['PORT'],
+                'db': config['REDIS']['DB'],
+            }
+        },
+    ]
+
 
 bot = lightbulb.BotApp(token=config['DISCORD']['BOT_TOKEN'])
 miru.install(bot)
@@ -26,19 +63,10 @@ tasks.load(bot)
 async def on_starting(_: hikari.StartingEvent) -> None:
     bot.d.config = config
 
-    bot.d.client_session = aiohttp.ClientSession(
-        headers={'X-Riot-Token': config['RIOT']['API_KEY']},
-        timeout=aiohttp.ClientTimeout(total=None),
-    )
-
-    bot.d.motor_client = motor.motor_asyncio.AsyncIOMotorClient(
-        'mongodb://{db_user}:{db_password}@{db_host}:{db_port}'.format(**config['MONGO']),
-    )
-
 
 @bot.listen()
 async def on_stopping(_: hikari.StoppingEvent) -> None:
-    await bot.d.client_session.close()
+    pass
 
 
 @bot.command
