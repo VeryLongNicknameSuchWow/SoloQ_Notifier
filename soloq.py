@@ -24,7 +24,7 @@ except KeyError as e:
 try:
     RIOT_API_KEY = config_section['RIOT_API_KEY']
     WEBHOOK_URL = config_section['WEBHOOK_URL']
-    USERNAME = config_section['USERNAME']
+    RIOT_ID = config_section['RIOT_ID']
     USER_REGION = config_section['USER_REGION']
     WIDE_REGION = config_section['WIDE_REGION']
     DATA_FILE = config_section['DATA_FILE']
@@ -49,9 +49,25 @@ def add_ordinal_suffix(n):
     return f"{n}th"
 
 
-def get_summoner_dto():
-    summoner_by_name_url = f"https://{USER_REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-name/{USERNAME}"
-    response = requests.get(summoner_by_name_url,
+def get_account_dto():
+    separator_index = RIOT_ID.find('#')
+    name = RIOT_ID[:separator_index]
+    tag = RIOT_ID[separator_index + 1:]
+
+    account_url = f"https://{WIDE_REGION}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
+    response = requests.get(account_url,
+                            headers={'X-Riot-Token': RIOT_API_KEY})
+    account_dto = response.json()
+    if not response.ok:
+        raise Exception("Could not get account", account_dto)
+    return account_dto
+
+
+def get_summoner_dto(account_dto):
+    puuid = account_dto['puuid']
+
+    summoner_by_puuid_url = f"https://{USER_REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
+    response = requests.get(summoner_by_puuid_url,
                             headers={'X-Riot-Token': RIOT_API_KEY})
     summoner_dto = response.json()
     if not response.ok:
@@ -61,6 +77,7 @@ def get_summoner_dto():
 
 def notify_game_result(summoner_dto, data):
     puuid = summoner_dto['puuid']
+    username = summoner_dto['name']
     summoner_eid = summoner_dto['id']
     last_match = data['last_match']
 
@@ -143,7 +160,7 @@ def notify_game_result(summoner_dto, data):
         # game lasted less than 5 minutes - likely a remake
         response = requests.post(WEBHOOK_URL, json={'embeds': [
             {
-                "title": USERNAME,
+                "title": username,
                 "description": f"remake...",
                 "color": 8421504,
                 "footer": {
@@ -162,7 +179,7 @@ def notify_game_result(summoner_dto, data):
                 print(f"game {result} (ID: {numeric_id})")
                 response = requests.post(WEBHOOK_URL, json={'embeds': [
                     {
-                        "title": USERNAME,
+                        "title": username,
                         "description": f"game {result} {emoji}{rank_message}",
                         "color": color,
                         "footer": {
@@ -179,6 +196,7 @@ def notify_game_result(summoner_dto, data):
 
 def notify_in_game(summoner_dto, data):
     puuid = summoner_dto['puuid']
+    username = summoner_dto['name']
     summoner_eid = summoner_dto['id']
 
     active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{summoner_eid}"
@@ -222,11 +240,11 @@ def notify_in_game(summoner_dto, data):
         raise Exception("Could not get match history", matches_dto)
     matches_past_24h = len(matches_dto)
 
-    message = f"{USERNAME} started a new game (ID: {current_game})"
+    message = f"{username} started a new game (ID: {current_game})"
     print(message)
     response = requests.post(WEBHOOK_URL, json={'embeds': [
         {
-            "title": USERNAME,
+            "title": username,
             "description": textwrap.dedent(
                 f"""
                 started a new game :sparkles:
@@ -254,7 +272,8 @@ if __name__ == '__main__':
                 data[key] = ''
 
         try:
-            summoner = get_summoner_dto()
+            account = get_account_dto()
+            summoner = get_summoner_dto(account)
             notify_game_result(summoner, data)
             notify_in_game(summoner, data)
             data['error'] = False

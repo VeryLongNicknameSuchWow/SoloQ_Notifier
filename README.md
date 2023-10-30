@@ -52,7 +52,7 @@ contain a section `SOLOQ` with the following keys:
 
 - `RIOT_API_KEY`: Your Riot Games API Key.
 - `WEBHOOK_URL`: The Discord webhook URL you want to use to send notifications.
-- `USERNAME`: The username of the player you want to track.
+- `RIOT_ID`: The Riot ID of the player you want to track.
 - `USER_REGION`: The specific region the player plays in, e.g., `na1` for North America.
 - `WIDE_REGION`: The broad region the player is in, e.g., `americas` for North America.
 - `DATA_FILE`: The name of the data file to store game and error information. This file should be unique for each
