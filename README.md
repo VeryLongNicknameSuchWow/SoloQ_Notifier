@@ -57,6 +57,8 @@ contain a section `SOLOQ` with the following keys:
 - `WIDE_REGION`: The broad region the player is in, e.g., `americas` for North America.
 - `DATA_FILE`: The name of the data file to store game and error information. This file should be unique for each
   username (when using multiple config files).
+- `ERROR_URL`: (OPTIONAL) The Discord webhook URL where errors will be posted.
+  Errors won't be posted if this is not specified. Errors may contain sensitive data.
 
 You can get your Riot Games API key [here](https://developer.riotgames.com/). User and wide regions should
 match [Riot Games API routing values](https://developer.riotgames.com/docs/lol#routing-values). Information on how to

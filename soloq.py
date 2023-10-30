@@ -32,6 +32,12 @@ except KeyError as e:
     print(e, "must be specified in config [SOLOQ] section")
     exit(1)
 
+ERROR_URL = None
+try:
+    ERROR_URL = config_section['ERROR_URL']
+except KeyError as e:
+    pass
+
 
 def add_ordinal_suffix(n):
     last_two_digits = n % 100
@@ -267,7 +273,7 @@ def notify_in_game(summoner_dto, data):
 
 if __name__ == '__main__':
     with shelve.open(DATA_FILE) as data:
-        for key in ['in_game', 'last_match', 'error']:
+        for key in ['in_game', 'last_match']:
             if key not in data:
                 data[key] = ''
 
@@ -276,11 +282,9 @@ if __name__ == '__main__':
             summoner = get_summoner_dto(account)
             notify_game_result(summoner, data)
             notify_in_game(summoner, data)
-            data['error'] = False
             print("Ran successfully!")
         except Exception as e:
-            if not data['error']:
-                requests.post(WEBHOOK_URL, json={'content': "An error occurred, check logs"})
-            data['error'] = True
+            if ERROR_URL is not None:
+                requests.post(ERROR_URL, json={'content': f"```{e}```"})
             print(datetime.datetime.now(), file=sys.stderr)
             raise e
