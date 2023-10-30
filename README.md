@@ -52,7 +52,7 @@ contain a section `SOLOQ` with the following keys:
 
 - `RIOT_API_KEY`: Your Riot Games API Key.
 - `WEBHOOK_URL`: The Discord webhook URL you want to use to send notifications.
-- `RIOT_ID`: The Riot ID of the player you want to track.
+- `RIOT_ID`: The Riot ID of the player you want to track, e.g., `USER#TAG`.
 - `USER_REGION`: The specific region the player plays in, e.g., `na1` for North America.
 - `WIDE_REGION`: The broad region the player is in, e.g., `americas` for North America.
 - `DATA_FILE`: The name of the data file to store game and error information. This file should be unique for each
@@ -91,7 +91,7 @@ This will run the script once every minute. Output and errors will be saved in `
 
 ### Note
 
-This script makes between 3 and 7 requests to Riot API each time it's run.
+This script makes between 4 and 8 requests to different Riot APIs each time it's run.
 Riot Games API has strict rate limits. If your application exceeds those limits, your IP may be temporarily blacklisted.
 Always ensure you are within the API usage limits to prevent this from happening.
 
