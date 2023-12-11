@@ -183,10 +183,15 @@ def notify_game_result(summoner_dto, data):
                 result = "won" if p['win'] else "lost"
                 color = 6591981 if p['win'] else 16737095
                 print(f"game {result} (ID: {numeric_id})")
+
+                placement = ''
+                if p.get('placement', 0) != 0:
+                    placement = f"{add_ordinal_suffix(p['placement'])} place\n"
+
                 response = requests.post(WEBHOOK_URL, json={'embeds': [
                     {
                         "title": username,
-                        "description": f"game {result} {emoji}{rank_message}",
+                        "description": f"{placement}game {result} {emoji}{rank_message}",
                         "color": color,
                         "footer": {
                             "text": f"ID: {numeric_id}"
