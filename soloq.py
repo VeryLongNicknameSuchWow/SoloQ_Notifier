@@ -81,9 +81,9 @@ def get_summoner_dto(account_dto):
     return summoner_dto
 
 
-def notify_game_result(summoner_dto, data):
+def notify_game_result(account_dto, summoner_dto, data):
     puuid = summoner_dto['puuid']
-    username = summoner_dto['name']
+    username = f"**{account_dto['gameName']}** #{account_dto['tagLine']}"
     summoner_eid = summoner_dto['id']
     last_match = data['last_match']
 
@@ -205,9 +205,9 @@ def notify_game_result(summoner_dto, data):
     data['last_match'] = str(matches_dto[0])
 
 
-def notify_in_game(summoner_dto, data):
+def notify_in_game(account_dto, summoner_dto, data):
     puuid = summoner_dto['puuid']
-    username = summoner_dto['name']
+    username = f"**{account_dto['gameName']}** #{account_dto['tagLine']}"
     summoner_eid = summoner_dto['id']
 
     active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{summoner_eid}"
@@ -285,8 +285,8 @@ if __name__ == '__main__':
         try:
             account = get_account_dto()
             summoner = get_summoner_dto(account)
-            notify_game_result(summoner, data)
-            notify_in_game(summoner, data)
+            notify_game_result(account, summoner, data)
+            notify_in_game(account, summoner, data)
             print("Ran successfully!")
         except Exception as e:
             if ERROR_URL is not None:
