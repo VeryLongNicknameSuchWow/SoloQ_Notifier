@@ -208,9 +208,8 @@ def notify_game_result(account_dto, summoner_dto, data):
 def notify_in_game(account_dto, summoner_dto, data):
     puuid = summoner_dto['puuid']
     username = f"**{account_dto['gameName']}** #{account_dto['tagLine']}"
-    summoner_eid = summoner_dto['id']
 
-    active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v4/active-games/by-summoner/{summoner_eid}"
+    active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
     response = requests.get(active_games_url,
                             headers={'X-Riot-Token': RIOT_API_KEY})
     current_game_info = response.json()
