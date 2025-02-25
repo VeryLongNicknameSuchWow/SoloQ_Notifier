@@ -213,12 +213,13 @@ def notify_in_game(account_dto, summoner_dto, data):
     response = requests.get(active_games_url,
                             headers={'X-Riot-Token': RIOT_API_KEY})
     current_game_info = response.json()
-    if not response.status_code == 404 and not response.ok:
-        raise Exception("Could not get active game", current_game_info)
 
-    if 'status' in current_game_info:
+    if response.status_code == 404:
         print("Currently not in game")
         return
+
+    if not response.ok:
+        raise Exception("Could not get active game", current_game_info)
 
     current_game = str(current_game_info['gameId'])
     previous_game = data['in_game']
