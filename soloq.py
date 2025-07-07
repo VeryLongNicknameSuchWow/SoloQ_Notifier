@@ -78,19 +78,6 @@ def get_account_dto():
     return account_dto
 
 
-def get_summoner_dto(account_dto):
-    puuid = account_dto["puuid"]
-
-    summoner_by_puuid_url = f"https://{USER_REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
-    response = requests.get(
-        summoner_by_puuid_url, headers={"X-Riot-Token": RIOT_API_KEY}
-    )
-    summoner_dto = response.json()
-    if not response.ok:
-        raise Exception("Could not get summoner", summoner_dto)
-    return summoner_dto
-
-
 def notify_game_result(account_dto, data):
     puuid = account_dto["puuid"]
     username = f"**{account_dto['gameName']}** #{account_dto['tagLine']}"
@@ -316,7 +303,6 @@ if __name__ == "__main__":
 
         try:
             account = get_account_dto()
-            summoner = get_summoner_dto(account)
             notify_game_result(account, data)
             notify_in_game(account, data)
             print("Ran successfully!")
