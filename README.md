@@ -41,7 +41,7 @@ Below are a few examples of messages sent using this script:
 
 This script was tested on Python 3.10 and requires the `requests` library. You can install it with pip:
 
-```
+```bash
 pip3 install requests
 ```
 
@@ -52,7 +52,8 @@ contain a section `SOLOQ` with the following keys:
 
 - `RIOT_API_KEY`: Your Riot Games API Key.
 - `WEBHOOK_URL`: The Discord webhook URL you want to use to send notifications.
-- `RIOT_ID`: The Riot ID of the player you want to track, e.g., `USER#TAG`.
+- `RIOT_ID`: The Riot ID of the player you want to track, e.g., `USER#TAG`. **Either this or PUUID must be provided.**
+- `PUUID`: The PUUID of the player you want to track. **Either this or RIOT_ID must be provided.**
 - `USER_REGION`: The specific region the player plays in, e.g., `na1` for North America.
 - `WIDE_REGION`: The broad region the player is in, e.g., `americas` for North America.
 - `DATA_FILE`: The name of the data file to store game and error information. This file should be unique for each
@@ -65,17 +66,19 @@ match [Riot Games API routing values](https://developer.riotgames.com/docs/lol#r
 generate a Discord channel webhook is provided
 in [this article](https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks).
 
+**Note about RIOT_ID vs PUUID**: You can use either the player's Riot ID (e.g., `USERNAME#TAG`) or their PUUID to identify the account. PUUID is a unique identifier that is tied to your specific API token and remains constant even if the player changes their Riot ID. If you have the PUUID, it can be more reliable for tracking since it won't change when players update their username. You can obtain a player's PUUID by first looking them up with their Riot ID using the Riot API.
+
 ### Running the script
 
 This script can be run with the following command:
 
-```
+```bash
 python3 soloq.py
 ```
 
 A path to a configuration file can optionally be passed as a command line argument:
 
-```
+```bash
 python3 soloq.py other_config.ini
 ```
 
@@ -83,7 +86,7 @@ You can setup a [cron](https://en.wikipedia.org/wiki/Cron) job to run the script
 that run `crontab -e` to open the cron
 table editor and add a new line at the bottom:
 
-```
+```bash
 */1 * * * * cd /path-to-your-script && python3 soloq.py 2>> soloq.log
 ```
 
