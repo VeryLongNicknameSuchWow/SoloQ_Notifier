@@ -43,9 +43,6 @@ with contextlib.suppress(KeyError):
 if not RIOT_ID and not PUUID:
     print("Either RIOT_ID or PUUID must be specified in config [SOLOQ] section")
     exit(1)
-if RIOT_ID and PUUID:
-    print("Only one of RIOT_ID or PUUID should be specified in config [SOLOQ] section")
-    exit(1)
 
 ERROR_URL = None
 with contextlib.suppress(KeyError):
@@ -63,19 +60,17 @@ def add_ordinal_suffix(n):
 
 
 def get_account_dto():
-    if RIOT_ID:
+    if PUUID:
+        account_url = f"https://{WIDE_REGION}.api.riotgames.com/riot/account/v1/accounts/by-puuid/{PUUID}"
+    elif RIOT_ID:
         separator_index = RIOT_ID.find("#")
         name = RIOT_ID[:separator_index]
-        tag = RIOT_ID[separator_index + 1:]
+        tag = RIOT_ID[separator_index + 1 :]
 
-        account_url = (
-            f"https://{WIDE_REGION}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
-        )
-    else:  # PUUID is provided
-        account_url = (
-            f"https://{WIDE_REGION}.api.riotgames.com/riot/account/v1/accounts/by-puuid/{PUUID}"
-        )
-    
+        account_url = f"https://{WIDE_REGION}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/{name}/{tag}"
+    else:
+        raise ValueError("Either PUUID or RIOT_ID must be provided")
+
     response = requests.get(account_url, headers={"X-Riot-Token": RIOT_API_KEY})
     account_dto = response.json()
     if not response.ok:
@@ -86,9 +81,7 @@ def get_account_dto():
 def get_summoner_dto(account_dto):
     puuid = account_dto["puuid"]
 
-    summoner_by_puuid_url = (
-        f"https://{USER_REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
-    )
+    summoner_by_puuid_url = f"https://{USER_REGION}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/{puuid}"
     response = requests.get(
         summoner_by_puuid_url, headers={"X-Riot-Token": RIOT_API_KEY}
     )
@@ -98,15 +91,12 @@ def get_summoner_dto(account_dto):
     return summoner_dto
 
 
-def notify_game_result(account_dto, summoner_dto, data):
-    puuid = summoner_dto["puuid"]
+def notify_game_result(account_dto, data):
+    puuid = account_dto["puuid"]
     username = f"**{account_dto['gameName']}** #{account_dto['tagLine']}"
-    summoner_eid = summoner_dto["id"]
     last_match = data["last_match"]
 
-    matches_by_puuid_url = (
-        f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-    )
+    matches_by_puuid_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
     response = requests.get(
         matches_by_puuid_url,
         params={"count": 1},
@@ -155,9 +145,7 @@ def notify_game_result(account_dto, summoner_dto, data):
 
         rank_message = f"\n\n{queue_str}"
 
-        league_entries_url = (
-            f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-summoner/{summoner_eid}"
-        )
+        league_entries_url = f"https://{USER_REGION}.api.riotgames.com/lol/league/v4/entries/by-puuid/{puuid}"
         response = requests.get(
             league_entries_url, headers={"X-Riot-Token": RIOT_API_KEY}
         )
@@ -182,18 +170,14 @@ def notify_game_result(account_dto, summoner_dto, data):
                     wins = entry["wins"]
                     losses = entry["losses"]
                     total = 100 * wins / (wins + losses)
-                    rank_message += (
-                        f"\n{wins}W {losses}L {total:.2f}% WR"
-                    )
+                    rank_message += f"\n{wins}W {losses}L {total:.2f}% WR"
                 except KeyError:
                     pass
 
     participants = match_dto["info"]["participants"]
     numeric_id = match.split("_")[1]
 
-    duration_multiplier = (
-        1000 if "gameEndTimestamp" not in match_dto["info"] else 1
-    )
+    duration_multiplier = 1000 if "gameEndTimestamp" not in match_dto["info"] else 1
     if match_dto["info"]["gameDuration"] <= 5 * 60 * duration_multiplier:
         # game lasted less than 5 minutes - likely a remake
         response = requests.post(
@@ -245,13 +229,11 @@ def notify_game_result(account_dto, summoner_dto, data):
     data["last_match"] = str(matches_dto[0])
 
 
-def notify_in_game(account_dto, summoner_dto, data):
-    puuid = summoner_dto["puuid"]
+def notify_in_game(account_dto, data):
+    puuid = account_dto["puuid"]
     username = f"**{account_dto['gameName']}** #{account_dto['tagLine']}"
 
-    active_games_url = (
-        f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
-    )
+    active_games_url = f"https://{USER_REGION}.api.riotgames.com/lol/spectator/v5/active-games/by-summoner/{puuid}"
     response = requests.get(active_games_url, headers={"X-Riot-Token": RIOT_API_KEY})
     current_game_info = response.json()
 
@@ -277,9 +259,7 @@ def notify_in_game(account_dto, summoner_dto, data):
     day_ago = today - datetime.timedelta(days=1)
     day_ago_epoch = int(day_ago.timestamp())
 
-    matches_by_puuid_url = (
-        f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
-    )
+    matches_by_puuid_url = f"https://{WIDE_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids"
     response = requests.get(
         matches_by_puuid_url,
         params={"startTime": midnight_epoch},
@@ -337,8 +317,8 @@ if __name__ == "__main__":
         try:
             account = get_account_dto()
             summoner = get_summoner_dto(account)
-            notify_game_result(account, summoner, data)
-            notify_in_game(account, summoner, data)
+            notify_game_result(account, data)
+            notify_in_game(account, data)
             print("Ran successfully!")
         except Exception as e:
             if ERROR_URL is not None:
